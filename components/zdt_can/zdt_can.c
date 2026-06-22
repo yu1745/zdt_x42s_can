@@ -116,8 +116,12 @@ esp_err_t zdt_can_split(uint8_t addr, const uint8_t *frame, int frame_len,
 {
     if (!frame || !out_pkts || !out_count) return ESP_ERR_INVALID_ARG;
     if (frame_len < 3) return ESP_ERR_INVALID_ARG;     /* 至少 Addr+Func+0x6B */
-    /* frame[0] 应等于 addr；不强制相等但告警式校验，便于抓 bug */
-    if (frame[0] != addr) return ESP_ERR_INVALID_ARG;
+
+    /* 地址字节直接用 frame[0]（libzdt 构造时已写入）。addr 参数仅用于兼容
+     * 调用习惯；如果调用方传了不同的 addr，以 frame[0] 为准（CAN ID 用它）。
+     * 这允许广播命令（frame[0]=0x00）也能正确发送。 */
+    const uint8_t eff_addr = frame[0];
+    (void)addr;   /* 不再强制 frame[0]==addr，避免广播场景误报 */
 
     /*
      * 正确分帧规则（手册 4.2.1 原文，已真机验证）：
@@ -138,7 +142,7 @@ esp_err_t zdt_can_split(uint8_t addr, const uint8_t *frame, int frame_len,
 
     while (remaining > 0 && pkt < ZDT_CAN_MAX_PACKETS) {
         zdt_can_packet_t *p = &out_pkts[pkt];
-        p->id = ((uint32_t)addr << 8) | (uint32_t)pkt;
+        p->id = ((uint32_t)eff_addr << 8) | (uint32_t)pkt;
         int take = remaining > 8 ? 8 : remaining;
         memcpy(&p->data[0], &frame[idx], (size_t)take);
         p->dlc = (uint8_t)take;
