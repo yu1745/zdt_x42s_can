@@ -1,0 +1,30 @@
+menu "zdt_can motor test"
+
+config ZDT_CAN_TX_GPIO
+    int "CAN TX GPIO"
+    default 7
+    help
+        esp32c3 连接 CAN 收发器 TXD 的 GPIO（GPIO 矩阵任意脚）。
+        本板实测正确接线：GPIO7=TX。
+
+config ZDT_CAN_RX_GPIO
+    int "CAN RX GPIO"
+    default 6
+    help
+        esp32c3 连接 CAN 收发器 RXD 的 GPIO。
+        本板实测正确接线：GPIO6=RX。
+
+config ZDT_CAN_BAUDRATE
+    int "CAN baudrate (bit/s)"
+    default 500000
+    help
+        必须与电机端配置一致。手册默认 500000。
+        可选：10000/20000/50000/100000/125000/250000/500000/800000/1000000。
+
+config ZDT_MOTOR_ADDR
+    int "motor address (1-255, 0=broadcast)"
+    default 1
+    help
+        目标电机地址，对应手册 5.6.1 设的 ID。0 为广播。
+
+endmenu

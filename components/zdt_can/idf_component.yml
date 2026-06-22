@@ -1,0 +1,13 @@
+version: "0.1.0"
+description: >-
+  ZDT_X42S 闭环步进电机 CAN(TWAI) 传输封装。
+  把 libzdt 构建的主机命令字节流按 ZDT 手册 4.2 章（含 PDF 勘误：
+  每包首字节为地址）拆分到 ESP-IDF TWAI 扩展帧上发送。
+url: https://github.com/yu1745/zdt_x42s_can
+dependencies:
+  idf:
+    version: ">=5.0"
+  libzdt:
+    git: https://github.com/yu1745/libzdt.git
+    path: .
+    version: master
