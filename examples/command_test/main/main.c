@@ -13,6 +13,8 @@
  *   - zdtBuildChangeAddrCmd           改电机地址
  *   - zdtBuildWriteAllConfigXCmd/Emm  写全驱动参数（含 comm_port_mode）
  *   - zdtBuildFactoryResetCmd         恢复出厂
+ *   - zdtBuildWritePidXCmd            改 PID 参数（会让电机转不动/失控）
+ *   - zdtBuildWritePidEmmCmd          同上 Emm 版
  *
  * 真机硬件：esp32c3 + CAN 收发器 + ZDT_X42S 电机（EMM 模式），500kbps，GPIO7=TX/GPIO6=RX
  */
@@ -447,9 +449,8 @@ void app_main(void)
     n = zdtBuildChangeOpenLoopCurrentCmd(A, ZDT_STORE_NO, 1000, b, sizeof b); test_write_basic("5.6.12 ChangeOpenLoopCurrent", A, b, n);
     n = zdtBuildChangeClosedLoopCurrentCmd(A, ZDT_STORE_NO, 2000, b, sizeof b); test_write_basic("5.6.13 ChangeClosedLoopCurrent", A, b, n);
     n = zdtBuildReadPidXCmd(A, b, sizeof b);                           test_read("5.6.14 ReadPidX(X)", A, 0x21, b, n, 4);
-    n = zdtBuildWritePidXCmd(A, ZDT_STORE_NO, 100, 100, 50, 20, b, sizeof b); test_write_basic("5.6.15 WritePidX(X)", A, b, n);
+    /* 跳过 5.6.15 WritePidX / 5.6.17 WritePidEmm：改 PID 会让电机转不动 */
     n = zdtBuildReadPidEmmCmd(A, b, sizeof b);                         test_read("5.6.16 ReadPidEmm", A, 0x21, b, n, 4);
-    n = zdtBuildWritePidEmmCmd(A, ZDT_STORE_NO, 100, 20, 5, b, sizeof b); test_write_basic("5.6.17 WritePidEmm", A, b, n);
     n = zdtBuildReadDmx512Cmd(A, b, sizeof b);                         test_read_long("5.6.18 ReadDmx512", A, b, n, 8);
     n = zdtBuildWriteDmx512Cmd(A, ZDT_STORE_NO, 16, 1, 0x00, 30, 10, 5, 3600, b, sizeof b); test_write_basic("5.6.19 WriteDmx512", A, b, n);
     n = zdtBuildReadPosWindowCmd(A, b, sizeof b);                      test_read("5.6.20 ReadPosWindow", A, 0x41, b, n, 3);
@@ -483,7 +484,7 @@ void app_main(void)
     /* ====== 汇总 ====== */
     ESP_LOGI(TAG, "");
     ESP_LOGI(TAG, "=================================================");
-    ESP_LOGI(TAG, "TOTAL: %d PASS / %d FAIL  (5 blacklisted: MultiMotor/ChangeAddr/WriteAllConfig×2/FactoryReset)",
+    ESP_LOGI(TAG, "TOTAL: %d PASS / %d FAIL  (7 blacklisted: MultiMotor/ChangeAddr/WriteAllConfig×2/FactoryReset/WritePid×2)",
              g_pass, g_fail);
     if (g_fail_count > 0) {
         ESP_LOGI(TAG, "FAILED:");
