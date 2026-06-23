@@ -632,7 +632,7 @@ static void test_write_pid_roundtrip(uint8_t addr)
         uint8_t b[20];
         int n = zdtBuildWritePidEmmCmd(addr, ZDT_STORE_NO, t_kp[i], t_ki[i], t_kd[i], b, sizeof b);
         send_cmd(addr, b, n);
-        vTaskDelay(pdMS_TO_TICKS(80));
+        vTaskDelay(pdMS_TO_TICKS(200));
         uint32_t g_kp, g_ki, g_kd;
         if (!read_pid_emm(addr, &g_kp, &g_ki, &g_kd)) {
             char m[80]; snprintf(m, sizeof m, "readback #%d failed", i);
@@ -656,7 +656,7 @@ static void test_write_pid_roundtrip(uint8_t addr)
         uint8_t b[20];
         int n = zdtBuildWritePidEmmCmd(addr, ZDT_STORE_NO, orig_kp, orig_ki, orig_kd, b, sizeof b);
         send_cmd(addr, b, n);
-        vTaskDelay(pdMS_TO_TICKS(80));
+        vTaskDelay(pdMS_TO_TICKS(200));
         uint32_t g_kp, g_ki, g_kd;
         if (!read_pid_emm(addr, &g_kp, &g_ki, &g_kd)) {
             record_fail(name, "restore readback failed");
@@ -901,40 +901,6 @@ void app_main(void)
     }
     const uint8_t A = s_primary;
 
-    /* ===== 临时：ABS_ZERO 真机反推（测完删）===== */
-    {
-        ESP_LOGI(TAG, "=== ABS_ZERO diag ===");
-        prep_motor(A);
-        /* 先用 REL_NOW 走到已知位置 ~20000 */
-        uint8_t b[16];
-        int n = zdtBuildPosModeEmmCmd(A, ZDT_DIR_CW, 60, 0, 1000, ZDT_MOVE_REL_NOW, ZDT_SYNC_NOW, b, sizeof b);
-        send_cmd(A, b, n);
-        vTaskDelay(pdMS_TO_TICKS(1000));
-        int32_t p1; read_realtime_pos(A, &p1);
-        ESP_LOGI(TAG, "after REL_NOW 1000 pulses: pos=%ld", (long)p1);
-
-        /* 发 ABS_ZERO target=0，看电机走到哪 */
-        n = zdtBuildPosModeEmmCmd(A, ZDT_DIR_CW, 60, 0, 0, ZDT_MOVE_ABS_ZERO, ZDT_SYNC_NOW, b, sizeof b);
-        ESP_LOGI(TAG, "ABS_ZERO target=0 bytes:");
-        {
-            char hex[80]; int off=0;
-            for(int i=0;i<n;i++) off+=snprintf(hex+off,sizeof(hex)-off,"%02X ",b[i]);
-            ESP_LOGI(TAG, "  %s", hex);
-        }
-        send_cmd(A, b, n);
-        vTaskDelay(pdMS_TO_TICKS(1500));
-        int32_t p2; read_realtime_pos(A, &p2);
-        ESP_LOGI(TAG, "after ABS_ZERO target=0: pos=%ld", (long)p2);
-
-        /* 发 ABS_ZERO target=10000，看走到哪 */
-        n = zdtBuildPosModeEmmCmd(A, ZDT_DIR_CW, 60, 0, 10000, ZDT_MOVE_ABS_ZERO, ZDT_SYNC_NOW, b, sizeof b);
-        send_cmd(A, b, n);
-        vTaskDelay(pdMS_TO_TICKS(1500));
-        int32_t p3; read_realtime_pos(A, &p3);
-        ESP_LOGI(TAG, "after ABS_ZERO target=10000: pos=%ld", (long)p3);
-        stop_motor(A);
-        ESP_LOGI(TAG, "=== ABS_ZERO diag done ===");
-    }
     prep_motor(A);
     stop_motor(A);
 

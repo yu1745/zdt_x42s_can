@@ -102,9 +102,27 @@ esp_err_t zdt_can_send(uint8_t addr, const uint8_t *frame, int frame_len,
  * 电机返回格式见手册 4.2.2：第 2 字节是状态码 02/E2/EE/9F。
  * 当前实现：等同一 ID 的 0 号包到达，把 data[0..dlc-1] 写入 out_buf
  * （data[0]=addr 也包含在内），out_len 为写入字节数。
- * 多包返回重组暂未实现（绝大多数返回是单包短帧）。 */
+ * 多包返回重组暂未实现（绝大多数返回是单包短帧）。
+ *
+ * 注意：如果注册了 RX 回调（zdt_can_register_rx_callback），帧会被
+ * 直接交给回调，不再进内部队列，此时 zdt_can_receive 读不到帧。 */
 esp_err_t zdt_can_receive(uint8_t *out_addr, uint8_t *out_buf, int buf_size,
                           int *out_len, TickType_t timeout);
+
+/* 可选：注册 RX 回调（回调优先，队列兜底）。
+ * 注册后，每收到一帧扩展帧，ISR 直接调用 cb（在 ISR 上下文！cb 必须 IRAM_SAFE、
+ * 不能阻塞、不能做重活）。帧不再进内部队列，zdt_can_receive 读不到。
+ * 传 cb=NULL 取消注册，帧恢复进内部队列。
+ *
+ * 用法：
+ *   - FluidNC 等高频场景：注册回调，回调里 xQueueSendFromISR 到自己的队列，
+ *     update() 里 drain 解析。零轮询延迟。
+ *   - command_test 等简单场景：不注册，用 zdt_can_receive 从内部队列读。
+ *
+ * cb 参数：addr=电机地址(从 CAN ID 高字节解出)，data/len=payload(DLC<=8)，
+ *          user=注册时传入的 user_data。 */
+typedef void (*zdt_can_rx_cb_t)(uint8_t addr, const uint8_t *data, int len, void *user);
+esp_err_t zdt_can_register_rx_callback(zdt_can_rx_cb_t cb, void *user);
 
 #ifdef __cplusplus
 }

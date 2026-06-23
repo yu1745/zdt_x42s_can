@@ -1,5 +1,5 @@
 idf_component_register(
     SRCS "zdt_can.c"
     INCLUDE_DIRS "include"
-    REQUIRES driver libzdt
+    REQUIRES esp_driver_twai libzdt
 )
