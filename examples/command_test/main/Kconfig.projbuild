@@ -1,0 +1,19 @@
+menu "zdt_can command_test"
+
+config ZDT_CAN_TX_GPIO
+    int "CAN TX GPIO"
+    default 7
+
+config ZDT_CAN_RX_GPIO
+    int "CAN RX GPIO"
+    default 6
+
+config ZDT_CAN_BAUDRATE
+    int "CAN baudrate (bit/s)"
+    default 500000
+
+config ZDT_MOTOR_ADDR
+    int "motor address (1-255, 0=broadcast)"
+    default 1
+
+endmenu
